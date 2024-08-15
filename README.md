@@ -17,13 +17,13 @@ Ensure that you have Node.js and npm installed on your system. If not, you can d
 1. Clone the repository:
 
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/deimos411/360-pulse.git
    ```
 
 2. Navigate to the project directory:
 
    ```bash
-   cd <project-directory>
+   cd 360-pulse
    ```
 
 3. Install the necessary dependencies:
