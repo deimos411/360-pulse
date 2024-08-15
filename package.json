@@ -1,5 +1,5 @@
 {
-  "name": "360_pulse",
+  "name": "360-pulse",
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
@@ -8,5 +8,9 @@
   },
   "author": "Josquin BERNARD",
   "license": "ISC",
-  "description": ""
+  "description": "",
+  "devDependencies": {
+    "express": "^4.19.2",
+    "path": "^0.12.7"
+  }
 }
