@@ -38,20 +38,21 @@
       }
       #leftButton,
       #rightButton {
-        font-size: 50px; /* Larger font size for bigger arrows */
-        padding: 20px 40px; /* Increase padding for a bigger button */
-        background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
-        color: white; /* White arrow color */
-        border: none; /* No border */
-        border-radius: 10px; /* Rounded corners */
-        cursor: pointer; /* Pointer cursor on hover */
-        z-index: 10; /* Ensure buttons are on top */
-        user-select: none; /* Prevent text selection */
+        font-size: 50px;
+        padding: 20px 40px;
+        background-color: rgba(0, 0, 0, 0.5);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        z-index: 10000; /* Ensure buttons are always on top */
+        position: fixed; /* Ensure they stay fixed in fullscreen mode */
+        pointer-events: auto; /* Ensure they can be clicked */
       }
 
       #leftButton:hover,
       #rightButton:hover {
-        background-color: rgba(0, 0, 0, 0.8); /* Darker background on hover */
+        background-color: rgba(0, 0, 0, 0.8);
       }
     </style>
   </head>
@@ -86,11 +87,12 @@
       const createScene = function () {
         const scene = new BABYLON.Scene(engine)
 
-        const camera = new BABYLON.ArcRotateCamera(
+        // Add a camera to the scene and attach it to the canvas
+        var camera = new BABYLON.ArcRotateCamera(
           'camera1',
-          0,
           Math.PI / 2,
-          10,
+          Math.PI / 2,
+          1,
           BABYLON.Vector3.Zero(),
           scene
         )
@@ -104,11 +106,51 @@
           'testdome',
           'panorama.png', // Placeholder; will be replaced with the first image
           {
-            resolution: 32,
-            size: 1000,
+            resolution: 64,
+            size: 10000,
           },
           scene
         )
+
+        // Disable the default mouse wheel zoom behavior
+        camera.inputs.remove(camera.inputs.attached.mousewheel)
+
+        // Listen to mouse wheel events to modify FOV instead
+        window.addEventListener('wheel', function (event) {
+          // Check the wheel delta to determine if scrolling up or down
+          if (event.deltaY > 0) {
+            // Zoom out (increase FOV)
+            camera.fov += 0.1 // Increase FOV
+          } else {
+            // Zoom in (decrease FOV)
+            camera.fov -= 0.1 // Decrease FOV
+          }
+
+          // Limit FOV between a min and max value to avoid extreme zoom
+          camera.fov = BABYLON.Scalar.Clamp(camera.fov, 0.3, 2.5) // Adjust limits as needed
+
+          // Prevent the default scrolling behavior
+          event.preventDefault()
+        })
+
+        // Handle pinch gesture for FOV control
+        camera.inputs.attached.pointers.onMultiTouch = function (
+          pointA,
+          pointB,
+          previousDistance,
+          currentDistance
+        ) {
+          var pinchDelta = currentDistance - previousDistance
+
+          if (pinchDelta > 0) {
+            camera.fov -= 0.015 // Decrease FOV (zoom in)
+          } else {
+            camera.fov += 0.015 // Increase FOV (zoom out)
+          }
+
+          // Limit FOV between a min and max value
+          camera.fov = BABYLON.Scalar.Clamp(camera.fov, 0.3, 2.5)
+        }
 
         return { scene, dome, camera }
       }
@@ -142,12 +184,24 @@
         }
       }
 
+      function isMobileDevice() {
+        return (
+          /Mobi|Android/i.test(navigator.userAgent) || window.innerWidth <= 768
+        )
+      }
+
       canvas.addEventListener('dblclick', toggleFullscreen)
 
+      // Add double-tap fullscreen toggle (ignoring pinch gestures)
       let lastTouchEnd = 0
       canvas.addEventListener('touchend', (event) => {
+        // Ignore if it was a multi-touch event (i.e., part of a pinch gesture)
+        if (event.touches.length > 0 || event.changedTouches.length > 1) {
+          return
+        }
+
         const now = new Date().getTime()
-        if (now - lastTouchEnd <= 300) {
+        if (now - lastTouchEnd <= 400) {
           toggleFullscreen()
         }
         lastTouchEnd = now
